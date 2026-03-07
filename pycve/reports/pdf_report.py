@@ -2,8 +2,25 @@
 
 from __future__ import annotations
 
+import unicodedata
 from datetime import datetime
 from pathlib import Path
+
+
+def _safe(text: str) -> str:
+    """Replace non-latin-1 characters with ASCII equivalents or '?'."""
+    # Normalize to decomposed form, then re-compose where possible
+    text = unicodedata.normalize("NFKD", text)
+    # Common Unicode replacements
+    replacements = {
+        "\u2018": "'", "\u2019": "'",  # left/right single quotes
+        "\u201c": '"', "\u201d": '"',  # left/right double quotes
+        "\u2013": "-", "\u2014": "-",  # en/em dash
+        "\u2026": "...",               # ellipsis
+    }
+    for src, dst in replacements.items():
+        text = text.replace(src, dst)
+    return text.encode("latin-1", errors="replace").decode("latin-1")
 
 from pycve.models.cve import CVERecord
 from pycve.utils.exceptions import MissingDependencyError
@@ -77,24 +94,44 @@ def generate_pdf_report(cves: list[CVERecord], output_path: str | Path) -> str:
 
     # ── CVE rows ─────────────────────────────────────────────────────────
     pdf.set_font("Helvetica", "", 7.5)
+    line_h = 5  # line height per wrapped line
+    left_margin = pdf.l_margin
+    # Pre-compute x offsets for each column
+    col_x = [left_margin + sum(col_widths[:i]) for i in range(len(col_widths))]
+
     for cve in cves:
         r, g, b = _SEVERITY_COLORS.get(cve.severity, (100, 100, 100))
         row_data = [
-            cve.id,
-            cve.severity,
-            str(cve.cvss_score) if cve.cvss_score is not None else "—",
-            cve.published.strftime("%Y-%m-%d") if cve.published else "—",
-            cve.vuln_status[:20],
-            (cve.description[:80] + "…") if len(cve.description) > 80 else cve.description,
+            _safe(cve.id),
+            _safe(cve.severity),
+            _safe(str(cve.cvss_score) if cve.cvss_score is not None else "-"),
+            _safe(cve.published.strftime("%Y-%m-%d") if cve.published else "-"),
+            _safe(cve.vuln_status[:20]),
         ]
+        desc = _safe(cve.description)
 
-        for i, (w, val) in enumerate(zip(col_widths, row_data)):
-            if i == 1:
-                pdf.set_text_color(r, g, b)
-            else:
-                pdf.set_text_color(30, 30, 30)
-            pdf.cell(w, 7, val, border=1)
-        pdf.ln()
+        y0 = pdf.get_y()
+
+        # Draw the first 5 columns using cell() at their x positions
+        for i, (w, val) in enumerate(zip(col_widths[:-1], row_data)):
+            pdf.set_xy(col_x[i], y0)
+            pdf.set_text_color(r, g, b) if i == 1 else pdf.set_text_color(30, 30, 30)
+            pdf.cell(w, line_h, val, border=1)
+
+        # Draw description with multi_cell so text wraps inside the column
+        pdf.set_text_color(30, 30, 30)
+        pdf.set_xy(col_x[-1], y0)
+        pdf.multi_cell(col_widths[-1], line_h, desc, border=1)
+
+        new_y = pdf.get_y()
+        row_h = new_y - y0
+
+        # If description wrapped, extend borders for the first 5 cells
+        if row_h > line_h:
+            for i, w in enumerate(col_widths[:-1]):
+                pdf.rect(col_x[i], y0, w, row_h)
+
+        pdf.set_xy(left_margin, new_y)
 
     # ── Footer ────────────────────────────────────────────────────────────
     pdf.set_y(-15)
