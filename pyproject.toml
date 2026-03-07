@@ -1,0 +1,69 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "pycve"
+version = "1.0.0"
+description = "Python library for CVE management using NIST NVD API v2"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "PyCVE Contributors", email = "gachaudhari02@gmail.com" }]
+keywords = ["cve", "nvd", "security", "vulnerability", "nist"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Security",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed",
+]
+dependencies = [
+    "requests>=2.31",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+reports = [
+    "jinja2>=3.1",
+    "openpyxl>=3.1",
+    "fpdf2>=2.7",
+]
+all = [
+    "pycve[reports]",
+]
+dev = [
+    "pytest>=7.0",
+    "pytest-mock>=3.10",
+    "responses>=0.23",
+    "jinja2>=3.1",
+    "openpyxl>=3.1",
+    "fpdf2>=2.7",
+]
+
+[project.scripts]
+pycve = "pycve.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/gauravchaudhari02/pycve"
+Documentation = "https://github.com/gauravchaudhari02/pycve#readme"
+Repository = "https://github.com/gauravchaudhari02/pycve"
+"Bug Tracker" = "https://github.com/gauravchaudhari02/pycve/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["pycve"]
+
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"

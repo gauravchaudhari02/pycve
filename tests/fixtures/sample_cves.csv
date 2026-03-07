@@ -1,0 +1,4 @@
+cve_id,severity,description
+CVE-2021-44228,CRITICAL,Apache Log4j2 RCE
+CVE-2023-44487,HIGH,HTTP/2 Rapid Reset
+CVE-2023-00001,MEDIUM,Test medium severity
