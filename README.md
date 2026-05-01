@@ -248,7 +248,7 @@ With a key: **50 requests per 30 seconds**
 
 ## Requirements
 
-- Python ≥ 3.10
+- `Python` ≥ 3.10
 - `requests` ≥ 2.31
 - `pyyaml` ≥ 6.0
 
