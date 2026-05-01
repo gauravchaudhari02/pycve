@@ -100,7 +100,7 @@
           <td>{{ cve.cvss_score if cve.cvss_score is not none else '—' }}</td>
           <td>{{ cve.published.strftime('%Y-%m-%d') if cve.published else '—' }}</td>
           <td>{{ cve.vuln_status }}</td>
-          <td class="desc">{{ cve.description[:200] }}{% if cve.description|length > 200 %}…{% endif %}</td>
+          <td class="desc">{{ cve.description }}</td>
         </tr>
         {% endfor %}
       </tbody>

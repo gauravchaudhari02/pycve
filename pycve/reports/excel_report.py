@@ -87,8 +87,11 @@ def generate_excel_report(cves: list[CVERecord], output_path: str | Path) -> str
             if col == 2:  # severity cell
                 cell.fill = fill
                 cell.font = Font(bold=True)
+            if col == 7:  # description cell
+                cell.alignment = Alignment(wrap_text=True, vertical="top")
+        ws.row_dimensions[r].height = None  # auto-height
 
-    _auto_width(ws)
+    _auto_width(ws, desc_col=7)
     ws.auto_filter.ref = ws.dimensions
 
     # ── References sheet ──────────────────────────────────────────────────
@@ -119,8 +122,12 @@ def _write_header_row(ws, headers: list[str]) -> None:
         cell.fill = PatternFill("solid", fgColor="1A1D26")
 
 
-def _auto_width(ws) -> None:
+def _auto_width(ws, desc_col: int | None = None) -> None:
     from openpyxl.utils import get_column_letter
     for col in ws.columns:
-        max_len = max((len(str(c.value or "")) for c in col), default=0)
-        ws.column_dimensions[get_column_letter(col[0].column)].width = min(max_len + 4, 80)
+        col_idx = col[0].column
+        if desc_col is not None and col_idx == desc_col:
+            ws.column_dimensions[get_column_letter(col_idx)].width = 60
+        else:
+            max_len = max((len(str(c.value or "")) for c in col), default=0)
+            ws.column_dimensions[get_column_letter(col_idx)].width = min(max_len + 4, 40)
